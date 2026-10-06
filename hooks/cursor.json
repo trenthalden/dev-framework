@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "python \"${CURSOR_PLUGIN_ROOT}/scripts/session_start.py\" --format cursor-json",
+        "timeout": 90
+      }
+    ]
+  }
+}

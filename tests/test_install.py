@@ -99,15 +99,20 @@ class InstallTests(WorkspaceTest):
     def test_plugin_manifests_agree_and_hermes_tools_work(self):
         plugin = json.loads((ROOT / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
         market = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8"))
+        cursor = json.loads((ROOT / ".cursor-plugin/plugin.json").read_text(encoding="utf-8"))
         self.assertEqual(plugin["version"], VERSION)
+        self.assertEqual(cursor["version"], VERSION)
         self.assertIn(f"version: {VERSION}", (ROOT / "plugin.yaml").read_text(encoding="utf-8"))
         self.assertEqual(market["plugins"][0]["source"], "./")
-        for name in ("init", "check", "nav"):  # skills hold the procedures; commands are one-line aliases
+        self.assertFalse((ROOT / "commands").exists(), "Claude-only aliases would load broken in Cursor (D1)")
+        for name in ("init", "check", "nav", "import", "catch-up"):  # skills are the one format every host reads
             skill = (ROOT / f"skills/df-{name}/SKILL.md").read_text(encoding="utf-8")
             self.assertTrue(skill.startswith(f"---\nname: df-{name}\n"), name)
-            self.assertIn(f"dev-framework:df-{name}", (ROOT / f"commands/{name}.md").read_text(encoding="utf-8"))
         hook = json.loads((ROOT / "hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]["SessionStart"][0]["hooks"][0]
         self.assertIn("${CLAUDE_PLUGIN_ROOT}/scripts/session_start.py", hook["command"])
+        hooks = json.loads((ROOT / cursor["hooks"]).read_text(encoding="utf-8"))  # never Claude's hooks/hooks.json
+        self.assertEqual(hooks["version"], 1)
+        self.assertIn("--format cursor-json", hooks["hooks"]["sessionStart"][0]["command"])
 
         spec = importlib.util.spec_from_file_location("devframework_hermes", ROOT / "__init__.py")
         hermes = importlib.util.module_from_spec(spec)

@@ -58,7 +58,7 @@ Restart the desktop app after enable. Plugins are loaded at process start. The t
 /plugin install dev-framework@dev-framework
 ```
 
-Use `/dev-framework:df-init`, `/dev-framework:df-check`, and `/dev-framework:df-nav`. The older names without `df-` are aliases for one release.
+Use `/dev-framework:df-init`, `/dev-framework:df-check`, and `/dev-framework:df-nav`.
 
 The session-start hook is silent unless the working directory is a framework project. Inside one, it runs the plugin's copy of the brief, not code from the opened repository, and it fetches that project's own upstream. If the fetch fails, the brief says the upstream was not checked.
 

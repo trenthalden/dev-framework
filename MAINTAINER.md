@@ -166,24 +166,25 @@ symlinks, Windows junctions, hard-linked target files and overlapping source/tar
 | Host | How it is installed | What it gives the agent |
 |---|---|---|
 | **Hermes Agent** | `hermes plugins install trenthalden/dev-framework` → `hermes plugins enable dev-framework` (plugins load at process start; the Desktop app needs a restart) | tools `df_init`, `df_check`, `df_nav`; skills `dev-framework:df-import`, `dev-framework:df-catch-up`; CLI `hermes devframework` |
-| **Claude Code** | `/plugin marketplace add trenthalden/dev-framework` → `/plugin install dev-framework@dev-framework` | skills `df-init`, `df-check`, `df-nav`, `df-import`, `df-catch-up` (each is also a slash command, e.g. `/dev-framework:df-init`); the older commands `/dev-framework:init`, `check`, `nav` still work for one release as aliases; a `SessionStart` hook that injects the project brief automatically when the working directory is a framework project |
-| **Cursor, Codex, any agent with a shell** | clone the repository; the skills are standard `SKILL.md` files | `python scripts/install.py`, then `.devframework/navigate.py` and `.devframework/check.py` in the project |
+| **Claude Code** | `/plugin marketplace add trenthalden/dev-framework` → `/plugin install dev-framework@dev-framework` | skills `df-init`, `df-check`, `df-nav`, `df-import`, `df-catch-up` (each is also a slash command, e.g. `/dev-framework:df-init`); a `SessionStart` hook that injects the project brief automatically when the working directory is a framework project |
+| **Cursor** | copy or link the repository into `~/.cursor/plugins/local/dev-framework`, then restart Cursor (Marketplace listing not published yet); for development a directory junction to the clone makes every edit live at the next session | the same five skills from `.cursor-plugin/plugin.json`; a `sessionStart` hook (`hooks/cursor.json`, the same `session_start.py --format cursor-json`). Cursor may drop hook context (KE-2026-10-02-CURSOR-SESSIONSTART); `AGENTS.md` §0 still leads the agent to the brief |
+| **Codex, any agent with a shell** | clone the repository; the skills are standard `SKILL.md` files | `python scripts/install.py`, then `.devframework/navigate.py` and `.devframework/check.py` in the project |
 
 The framework itself is the same in every host: `template/` + `scripts/install.py` + the `.devframework/` tools,
 standard library only. A host adapter only wraps them — it never holds logic.
 
-### What the Claude Code plugin runs
+### What the Claude Code and Cursor plugins run
 
 Checked before you install, so nothing is a surprise:
 
-- **One hook, `SessionStart`.** It runs the plugin's own `scripts/session_start.py` with the Python on
+- **One hook, `SessionStart` (Cursor: `sessionStart`).** It runs the plugin's own `scripts/session_start.py` with the Python on
   your PATH. Outside a framework project (no `.devframework/` up the tree) it exits silently. Inside one, the
   plugin's own `navigate.py` reads the project's documents and prints a one-screen brief. **No code from the
   opened repository is executed** — a cloned stranger's repo can ship any `.devframework/`, and it is only read.
 - **One network call, and only inside a framework project:** `git fetch` against that project's own upstream,
   so the brief can say whether someone else has committed since your last session. Nothing is uploaded.
 - **No MCP servers, no background processes, no telemetry, no dependencies** beyond the Python standard library.
-- **Commands and skills are instructions for the agent**, not programs. `/dev-framework:init` copies templates
+- **Skills are instructions for the agent**, not programs. `df-init` copies templates
   into a repository only when you run it, never overwrites existing documents, and has `--dry-run`.
 - **Your tests run only when you ask** (`/dev-framework:df-check finish`), with the command you configured.
 

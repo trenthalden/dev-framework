@@ -23,3 +23,6 @@
 | KE-2026-08-31-UPGRADE | no non-destructive upgrade protocol |  |
 | KE-2026-09-03-USECASE-PADDED-RANGE | unique headings, phantom citations |  |
 | KE-2026-09-24-DEVLOG-SCAN | local Devlog failed the package checks |  |
+| KE-2026-10-02-CURSOR-SESSIONSTART | Cursor may drop the session-start brief |  |
+| KE-2026-10-02-CONSOLE-ENCODING | install.py --help crashed on a cp1251 console |  |
+| KE-2026-10-02-SECRET-STANDINS | finish blocked by placeholder keys in quoted READMEs |  |

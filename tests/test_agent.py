@@ -59,9 +59,10 @@ class AgentTests(WorkspaceTest):
                              cwd=self.target, capture_output=True, text=True, encoding="utf-8", timeout=60)
         return run.returncode, run.stdout
 
-    def hook(self, cwd):
-        env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "CLAUDE_PROJECT_DIR": str(cwd)}
-        run = subprocess.run([sys.executable, "-B", str(ROOT / "scripts/session_start.py")], cwd=cwd, env=env,
+    def hook(self, cwd, *args, project_var="CLAUDE_PROJECT_DIR"):
+        env = {k: v for k, v in os.environ.items() if not k.endswith("_PROJECT_DIR")}
+        env.update(PYTHONDONTWRITEBYTECODE="1", **{project_var: str(cwd)})
+        run = subprocess.run([sys.executable, "-B", str(ROOT / "scripts/session_start.py"), *args], cwd=self.base, env=env,
                              capture_output=True, text=True, encoding="utf-8", timeout=120)
         self.assertEqual(run.returncode, 0, run.stderr)
         return run.stdout
@@ -140,6 +141,11 @@ class AgentTests(WorkspaceTest):
             f"from pathlib import Path\nPath({str(marker)!r}).write_text('ran')\n", encoding="utf-8")
         self.assertIn("session brief", self.hook(self.target), "the plugin's own navigator reads the documents")
         self.assertFalse(marker.exists(), "code from the opened repository never runs at session start")
+
+        cursor = ("--format", "cursor-json")  # Cursor: same brief as JSON, project from CURSOR_PROJECT_DIR
+        self.assertEqual(self.hook(self.base, *cursor, project_var="CURSOR_PROJECT_DIR"), "")
+        context = json.loads(self.hook(self.target, *cursor, project_var="CURSOR_PROJECT_DIR"))["additional_context"]
+        self.assertIn("session brief", context)
 
     def test_host_rules_that_fight_the_framework_until_the_operator_decides(self):
         self.init()

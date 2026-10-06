@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Session-start hook (any host whose hook stdout becomes context; Claude Code today): print the project's DEV Framework brief so the agent starts from context, not archaeology.
+"""Session-start hook: print the project's DEV Framework brief so the agent starts from context, not archaeology.
+
+`--format text` (default) for hosts whose hook stdout becomes context (Claude Code); `--format cursor-json`
+wraps the same text as `{"additional_context": ...}` for Cursor's sessionStart hook.
 
 Silent (exit 0, no output) when the working directory is not a framework project — a hook must never
 add noise to an unrelated session. Standard library only.
@@ -10,6 +13,8 @@ repository runs at session start, so opening a cloned stranger's repository is s
 """
 from __future__ import annotations
 
+import argparse
+import json
 import os
 import subprocess
 import sys
@@ -20,7 +25,7 @@ NAVIGATE = Path(__file__).resolve().parents[1] / "template" / ".devframework" / 
 
 
 def project_root() -> Path | None:
-    start = Path(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()).resolve()
+    start = Path(os.environ.get("CURSOR_PROJECT_DIR") or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()).resolve()
     for candidate in (start, *start.parents):
         if (candidate / ".devframework" / "navigate.py").is_file():
             return candidate
@@ -29,23 +34,29 @@ def project_root() -> Path | None:
     return None
 
 
-def main() -> int:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    root = project_root()
-    if root is None:
-        return 0
+def brief(root: Path) -> str:
     try:
         run = subprocess.run([sys.executable, "-B", str(NAVIGATE), "--root", str(root), "brief"],
                              cwd=str(root), capture_output=True, text=True, encoding="utf-8",
                              errors="replace", timeout=60)
     except (OSError, subprocess.TimeoutExpired) as error:
-        print(f"DEV Framework brief unavailable ({error}); run `python .devframework/navigate.py brief` by hand.")
-        return 0
+        return f"DEV Framework brief unavailable ({error}); run `python .devframework/navigate.py brief` by hand."
     if run.returncode != 0:
-        return 0
-    print("DEV Framework — session brief (read this before opening documents; "
-          "`python .devframework/navigate.py find <ID|keyword>` returns one block, not a file):")
-    print(run.stdout.strip()[:MAX_CHARS])
+        return ""
+    return ("DEV Framework — session brief (read this before opening documents; "
+            "`python .devframework/navigate.py find <ID|keyword>` returns one block, not a file):\n"
+            + run.stdout.strip()[:MAX_CHARS])
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--format", choices=("text", "cursor-json"), default="text")
+    form = parser.parse_args().format
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    root = project_root()
+    text = brief(root) if root else ""
+    if text:  # silent outside a project in every format: a hook must not add noise
+        print(json.dumps({"additional_context": text}, ensure_ascii=False) if form == "cursor-json" else text)
     return 0
 
 

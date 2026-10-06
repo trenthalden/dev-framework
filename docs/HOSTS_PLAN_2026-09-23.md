@@ -1,6 +1,6 @@
 # Hosts plan: Codex, Cursor, OpenCode
 
-Date: 2026-09-23. Status: **plan, nothing implemented**. Owner of decisions: the operator.
+Date: 2026-09-23. Status: Cursor (§4) implemented locally 2026-10-02, live run pending; Codex and OpenCode planned. Owner of decisions: the operator.
 Checklist: [PLUGIN_CHECKLIST.md](PLUGIN_CHECKLIST.md) portion 4. Base: v1.2.2 (Hermes + Claude Code adapters shipped).
 
 The rule stays the same for every host: **core** (`template/` + `scripts/install.py` + `.devframework/*.py`) →
@@ -82,21 +82,31 @@ becomes context. It runs natively on Windows, and the owner already has `~/.code
 hook is silent outside one; `init → doctor → finish` works on a sample project under the default sandbox; the
 installing agent's pre-install review finds nothing we have not documented.
 
-## 4. Phase 2 — Cursor (same manifest, second consumer)
+## 4. Phase 2 — Cursor (moved first by the operator, 2026-10-02)
 
-- [ ] Reuse the Phase 1 root `plugin.json`; add Cursor fields only if the spike shows they are needed.
-      **UNVERIFIED:** whether Cursor reads `.claude-plugin/`. Do not rely on it.
-- [ ] Cursor hook file (`version: 1`, event `sessionStart`) → `session_start.py --format cursor-json`. The manifest
-      field `hooks` points at it, so it never collides with the Claude/Codex hook file.
-- [ ] **Windows fallback for the known sessionStart bug:** an `alwaysApply: true` rule in the plugin's `rules/`
-      that says "run `/df-nav brief` first when `.devframework/` exists". It is a single line, so the brief is still
-      reached when the hook stays silent.
-- [ ] Run-mode note: the sandbox blocks `.git/config` and limits network, so `git fetch` behaves as in Codex.
-      Allowlist mode can allow `python .devframework/check.py`.
-- [ ] From-scratch install test in Cursor 3.18.9 (already installed): editor sidebar install, then the local path
-      `~/.cursor/plugins/local/dev-framework` for development.
+Facts re-checked 2026-10-02 (cursor.com/docs `reference/plugins`, `hooks`, `plugins`; github.com/cursor/plugin-template):
+Cursor reads its own `.cursor-plugin/plugin.json` (not `.claude-plugin/`), expands both `${CURSOR_PLUGIN_ROOT}` and
+`${CLAUDE_PLUGIN_ROOT}`, sets `CURSOR_PROJECT_DIR` (and the alias `CLAUDE_PROJECT_DIR`) for hooks, and discovers
+`skills/`, `commands/`, `rules/` and `hooks/hooks.json` by default unless the manifest names a path. sessionStart
+output is `{"additional_context": …}`, but it is often dropped (KE-2026-10-02-CURSOR-SESSIONSTART).
 
-**Acceptance:** as in Phase 1, with the Windows result stated either way: "hook works" or "fallback rule used".
+- [x] `.cursor-plugin/plugin.json` (`skills: skills/`, `hooks: hooks/cursor.json`) and `.cursor-plugin/marketplace.json`.
+      A separate hook file, because default discovery would read Claude's `hooks/hooks.json` (other schema).
+- [x] `hooks/cursor.json` (`version: 1`, `sessionStart`) → `python "${CURSOR_PLUGIN_ROOT}/scripts/session_start.py"
+      --format cursor-json`. Calls `python` directly, so no bash/WSL on Windows.
+- [x] `session_start.py --format text|cursor-json`; the project comes from `CURSOR_PROJECT_DIR`, then
+      `CLAUDE_PROJECT_DIR`, then cwd. Silent outside a framework project in both formats.
+- [x] `commands/` deleted (D1: one release has passed; the aliases call Claude's Skill tool and would load broken
+      in Cursor). Skills are the only command format.
+- [x] No always-apply plugin rule: `AGENTS.md` §0 is the fallback when the hook context is dropped.
+- [x] Tests: `.cursor-plugin` version = `VERSION`, manifest hook file is not Claude's; cursor-json hook gives
+      valid JSON with the brief from `CURSOR_PROJECT_DIR` and stays silent outside. Each failed once on a planted defect.
+- [ ] Live run in Cursor 3.18.9 through a junction `~/.cursor/plugins/local/dev-framework` → this repository:
+      plugin listed with five skills; no second load of `hooks/hooks.json`; new chat in a framework project gets
+      the brief (record: hook or AGENTS.md); silent in a non-framework project; `df-init` → doctor → finish.
+- [ ] Release (separate authorization): `VERSION` 1.7.0 in all four manifests, tag, Cursor Marketplace submission.
+
+**Acceptance:** as in Phase 1, with the result stated either way: "hook works" or "AGENTS.md fallback used".
 
 ## 5. Phase 3 — OpenCode
 
@@ -124,6 +134,7 @@ local storage, and Cursor has no known export. Record baselines in `evals/RESULT
 ## 7. Operator decisions
 
 **Decided 2026-09-23 by the operator: D1 = A, D2 = A, D3 = A, D4 = Codex → Cursor → OpenCode (all as recommended).**
+**D4 changed 2026-10-02: Cursor → Codex → OpenCode** (Cursor is installed on the owner's PC, the Codex CLI is not).
 **D2 reversed the same day: no `dist/` branch** (simplification pass; the payload is small).
 
 | # | Decision | Recommendation |

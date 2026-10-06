@@ -6,6 +6,9 @@ for `9efa0d7` was green. The v0.2 notes below are the 31 August record. They are
 
 ## In progress
 
+- Cursor adapter — authorized 2026-10-02, local only (no commit/push/publish). Plan, decisions and
+  live result: [HOSTS_PLAN_2026-09-23.md](HOSTS_PLAN_2026-09-23.md) §4.
+
 - DEV Framework as a product (Hermes plugin v0.4.0, host adapters, evals, hostcheck) — authorized
   2026-09-21; checklist [PLUGIN_CHECKLIST.md](PLUGIN_CHECKLIST.md); token analysis
   [TOKEN_BUDGET_2026-09-20.md](TOKEN_BUDGET_2026-09-20.md).
@@ -29,7 +32,7 @@ for `9efa0d7` was green. The v0.2 notes below are the 31 August record. They are
   agents), the engineer's known-errors memory, plan-review protocol and consultation log. Research to start
   from: `D:\DEV\Hermes\docs\research\HUMAN_AGENT_AGENT_FLOW_2026-09-23.md`. DEV Framework keeps only what a
   person needs to build an agent: `template/.devframework/agents/` (guidelines, agent card, eval set, retirement).
-- Host adapters Codex → Cursor → OpenCode — deferred by the operator 2026-09-23. Plan and decisions
+- Host adapters Cursor → Codex → OpenCode (D4 reordered 2026-10-02: Cursor first). Plan and decisions
   (D1 done, D2 cancelled, D3 project-local JS for OpenCode): [HOSTS_PLAN_2026-09-23.md](HOSTS_PLAN_2026-09-23.md) §3–§5.
 - Acceptance follows second-review evidence, then authorized commit/push and hosted CI.
 

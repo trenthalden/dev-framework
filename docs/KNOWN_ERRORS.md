@@ -86,6 +86,17 @@
 - Verification: `tests/test_gates.py`, `test_a_local_devlog_is_not_product_documentation`.
   A broken link in a normal doc is still an error. The configured Devlog directory is not.
 
+## KE-2026-10-02-CURSOR-SESSIONSTART — Cursor may drop the session-start brief
+
+- Found: 2 October 2026, while planning the Cursor adapter. Cursor runs the `sessionStart` hook before
+  the agent window is ready; users report `additional_context` "merged" in the log but absent from the
+  model's context (forum.cursor.com threads 157141, 158452; also on Windows when `bash` resolves to WSL).
+- Impact: the brief may not arrive by itself in Cursor.
+- Defence: the hook calls `python` directly (no bash), and `AGENTS.md` §0, which Cursor reads natively,
+  tells the agent to run `navigate.py brief` first. No always-apply plugin rule: it would cost tokens in
+  every project without the framework. Add one only if a live session shows the agent skipping §0.
+- Status: open (host defect). Live result per Cursor version is recorded in HOSTS_PLAN §4.
+
 ## KE-2026-10-02-CONSOLE-ENCODING — install.py --help crashed on a cp1251 console
 
 - Found: 2 October 2026, installing into KnowledgeBase through the Claude Code plugin (Windows, Russian locale,

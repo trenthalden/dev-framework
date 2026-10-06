@@ -56,4 +56,4 @@ Install the DEV Framework into the repository named in the operator's arguments 
 6. the `df-check` skill with `<TARGET> doctor` → fix what it lists → the `df-check` skill with `<TARGET> finish` once tests exist.
 7. Report in numbers: files created, cases written (covered / gap), doctor and finish results, what is still unconfirmed.
 
-Deeper procedure and the incidents behind the rules: skill `dev-framework:df-import`.
+Deeper procedure and the incidents behind the rules: skill `df-import`.

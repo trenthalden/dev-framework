@@ -17,8 +17,9 @@ only what the release actually changes.
 | Package | `VERSION` |
 | Hermes plugin | `plugin.yaml` |
 | Claude Code plugin | `.claude-plugin/plugin.json` |
+| Cursor plugin | `.cursor-plugin/plugin.json` |
 
-These three must stay on the same number. This package has no deployed service. Recovery is
+These four must stay on the same number. This package has no deployed service. Recovery is
 `git checkout` of the previous tag, then `python -B scripts/verify.py`. There is no runtime to restart.
 
 ## Order

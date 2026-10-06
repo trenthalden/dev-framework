@@ -34,14 +34,14 @@ Python 3.10+ and Git. The framework itself is the Python standard library only. 
 |---|---|
 | What can it change? | Files inside the target project you name. A preview (`--dry-run`) writes nothing. |
 | Network | Installing from GitHub needs network. There is no telemetry and no background process. |
-| Session start | In a Claude Code framework project, one hook runs the plugin's own code, then `git fetch` on that project's upstream. Nothing is uploaded. If fetch fails, the brief says the upstream was not checked. |
+| Session start | In a Claude Code or Cursor framework project, one hook runs the plugin's own code, then `git fetch` on that project's upstream. Nothing is uploaded. If fetch fails, the brief says the upstream was not checked. |
 | Where data sits | In the target project. An optional Devlog stays local and is git-ignored on a public repository. |
 | Removal | There is no uninstaller. Delete the files the preview listed, after you review them. An update does not delete a file the package stopped shipping; it reports it and keeps it. |
 | Platforms | Package tests run in CI on Windows and Ubuntu, Python 3.10 and 3.13. A live plugin walkthrough was done on Windows. macOS is not verified. |
 | Secret scan | A text heuristic. Not a security audit. History and built artifacts are not scanned. |
 | Vulnerability reports | No private channel is configured. See [SECURITY.md](SECURITY.md). Do not put secrets in a public issue. |
 
-Codex, Cursor, and OpenCode do not have a native adapter in this version. An agent with a shell can run the same scripts. That is not a tested host integration.
+Codex and OpenCode do not have a native adapter in this version. An agent with a shell can run the same scripts. That is not a tested host integration.
 
 ## Run the demo
 
@@ -136,11 +136,10 @@ A profile selects a workflow. It cannot weaken the checks. Per-rule on/off switc
 |---|---|---|
 | Hermes Agent | `hermes plugins install trenthalden/dev-framework`, then `hermes plugins enable dev-framework` | tools `df_init`, `df_check`, `df_nav` |
 | Claude Code | `/plugin marketplace add trenthalden/dev-framework`, then `/plugin install dev-framework@dev-framework` | `/dev-framework:df-init`, `/dev-framework:df-check`, `/dev-framework:df-nav` |
+| Cursor | copy or link the repository into `~/.cursor/plugins/local/dev-framework`, then restart Cursor (Marketplace listing not published yet) | skills `df-init`, `df-check`, `df-nav` |
 | Any agent with a shell | clone this repository | `python scripts/install.py`, then `.devframework/check.py` |
 
-Older Claude commands `/dev-framework:init`, `check`, and `nav` are aliases for one release. Prefer the `df-` names.
-
-Plugins load at process start. The Hermes desktop app needs a restart after enable. The Claude Code hook is silent outside a framework project, and it does not execute code from the repository you opened.
+Plugins load at process start. The Hermes desktop app needs a restart after enable. The Claude Code and Cursor hooks are silent outside a framework project, and they do not execute code from the repository you opened. Cursor sometimes drops a session-start hook's context; then the agent still reaches the brief through `AGENTS.md`.
 
 ## Limits
 
