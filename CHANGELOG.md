@@ -3,6 +3,18 @@
 This repository uses semantic versions. `1.x` is still a beta: a minor tag in this beta has already
 changed defaults. Read this file before updating. Tags use `dev-framework--vX.Y.Z`.
 
+## Unreleased
+
+Fixes from installing into a content repository (KnowledgeBase, 2026-10-02):
+
+- `install.py --help` crashed with `UnicodeEncodeError` on a cp1251 console (the `→` in `--kind` help).
+  It now writes UTF-8 with replacement, as `check.py` already did; `finish` runs child commands with
+  `PYTHONIOENCODING=utf-8`. KE-2026-10-02-CONSOLE-ENCODING.
+- The secret heuristic accepts documentation stand-ins (`your-key`, `fc-your-key`, `<your key>`, `sk-...`, `fc-***`, `xxxx`)
+  and `max_tokens: 4096`; real-shaped keys are still caught.
+- New `secret_scan.exclude` in project.json: path globs left out of the worktree scan only. Doctor and
+  `finish` name them every run; `commit-check` still scans those paths staged. KE-2026-10-02-SECRET-STANDINS.
+
 ## 1.6.1 — 2026-09-24
 
 Tag `dev-framework--v1.6.1`. Public page, MIT license file, and a fix: `doctor` and package verify no longer treat a local Devlog as product documentation.

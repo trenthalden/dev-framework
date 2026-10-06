@@ -85,7 +85,19 @@ The staged mode reads regular-file index blobs by object ID. Worktree mode reads
 source snapshot. Both detect quoted assignments (including C# verbatim), bare dotenv/YAML
 scalars at line start, common token shapes and private-key headers. Findings show path/line/type,
 never the value. Obvious whole-value placeholders such as REPLACE_ME are accepted.
-Tests/docs have no blanket exemption. UTF-8 and BOM-marked UTF-16 text are supported.
+Documentation stand-ins are accepted too: `your-`/`your_` at the start or after a vendor prefix
+(`fc-your-key`), values opening with `<` or `abcdef`, and values containing `...`, `…`, `xxx` or `***`
+(`sk-...`, `fc-***`). A digit-only value of a `*tokens` name (`max_tokens: 4096`) is a count, and an
+unquoted line-start scalar followed by more words (`FreeToken: Efficient Edge Serving`) is a title;
+a YAML password written as several unquoted words is therefore missed.
+Tests/docs have no blanket exemption. A project whose content must quote third-party text verbatim
+(clipped READMEs, vendored docs) may list path globs in project.json,
+`"secret_scan": {"exclude": ["clips/**"]}` (fnmatch: `*` also crosses `/`). They leave only the
+**worktree** scan (`finish`, `secrets --worktree`); doctor and that scan name the globs and the number
+of skipped files on every run, and a glob made only of `*` and `/` is refused. The staged scan
+(`commit-check`, `secrets --staged`) ignores the list on purpose: it is the last check before content
+enters history, and a real key pasted into an excluded folder must still stop the commit.
+UTF-8 and BOM-marked UTF-16 text are supported.
 Exact token_type Bearer/MAC and plain token_endpoint/token_url URLs without credentials,
 query or fragment are metadata, not passwords. Independently recognizable credential
 shapes still fail. Arbitrary expressions, multiline/raw/encoded values and provider-specific

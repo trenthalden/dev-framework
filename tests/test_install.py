@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import subprocess
+import sys
 
 from common import ROOT, WorkspaceTest, install
 from verification import doctor, installed_kind
@@ -12,6 +15,14 @@ NEWER = ".".join(str(n + (i == 2)) for i, n in enumerate(map(int, VERSION.split(
 
 
 class InstallTests(WorkspaceTest):
+    def test_help_does_not_crash_on_a_non_utf8_console(self):
+        # KE-2026-10-02-CONSOLE-ENCODING: a cp1251 stdout raised UnicodeEncodeError on the arrow in --kind help.
+        scripts = ["scripts/install.py", *(f"template/.devframework/{name}.py" for name in ("check", "navigate", "hostcheck"))]
+        for script in scripts:
+            run = subprocess.run([sys.executable, "-B", str(ROOT / script), "--help"], capture_output=True, timeout=60,
+                                 env={**os.environ, "PYTHONIOENCODING": "cp1251"})
+            self.assertEqual(run.returncode, 0, f"{script}: {run.stderr.decode(errors='replace')[-300:]}")
+
     def test_preview_seed_update_and_conflicts(self):
         self.assertTrue(self.init(dry_run=True)["dry_run"])
         self.assertFalse(self.target.exists(), "a preview creates nothing")

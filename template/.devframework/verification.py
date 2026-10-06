@@ -141,6 +141,10 @@ def load_config(root: Path, kind: str = "product") -> tuple[dict, list[str], lis
     checks = commands.get("checks")
     if not isinstance(checks, list) or not all(valid_command(c) for c in checks):
         errors.append("checks must be an array of nonempty argument arrays (empty list allowed)")
+    try:
+        secret_excludes(config)
+    except ValueError as error:
+        errors.append(str(error))
     evidence = config.get("test_evidence")
     if evidence is None:
         setup.append("Configure test_evidence format and max_skipped; old exit-only commands are not sufficient")
@@ -148,6 +152,16 @@ def load_config(root: Path, kind: str = "product") -> tuple[dict, list[str], lis
           or type(evidence.get("max_skipped")) is not int or evidence["max_skipped"] < 0):
         errors.append("test_evidence requires format devframework-v1 and nonnegative integer max_skipped")
     return config, errors, setup
+
+
+def secret_excludes(config: dict) -> list[str]:
+    """`secret_scan.exclude`: path globs dropped from the WORKTREE secret scan; the staged scan ignores them."""
+    section = config.get("secret_scan") or {}
+    patterns = section.get("exclude", []) if isinstance(section, dict) else None
+    # A pattern of only * and / would silence the whole scan: the scan stays mandatory.
+    if not isinstance(patterns, list) or not all(isinstance(p, str) and p.strip("*/ ") for p in patterns):
+        raise ValueError('secret_scan.exclude must be a list of path globs such as ["clips/**"], not one matching everything')
+    return patterns
 
 
 _UC_RANGE = re.compile(r"UC-(\d+)(?:…|\.\.\.)(?:UC-)?(\d+)", re.I)
@@ -326,6 +340,9 @@ def doctor(root: Path) -> dict:
             warnings.append("TESTING: " + note)
         errors.extend(config_errors)
         setup.extend(config_setup)
+        if not config_errors and secret_excludes(config):
+            warnings.append(f"SECRET SCAN EXCLUDES (worktree only; commit-check still scans them staged): "
+                            f"{', '.join(secret_excludes(config))} — project.json secret_scan.exclude")
     except (ValueError, OSError):
         config = {}
         errors.append("Unreadable project.json")

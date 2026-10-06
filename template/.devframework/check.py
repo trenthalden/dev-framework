@@ -11,7 +11,7 @@ import sys
 sys.dont_write_bytecode = True
 from safety import checked_path
 from secrets_check import scan_index
-from verification import doctor, load_config
+from verification import doctor, load_config, secret_excludes
 from source_scope import scan_worktree, snapshot
 import devlog as devlog_mod
 import navigate
@@ -38,9 +38,18 @@ def show_secrets(root: Path, report: dict | None = None) -> int:
         print(f"SECRET SUSPECT: {match['path']}:{match['line']} ({match['kind']}; value redacted)")
     for path in report["nontext_files"]:
         print(f"NOT TEXT-SCANNED: {path}")
+    excluded = report.get("excluded")
+    if excluded and excluded["patterns"]:
+        print(f"EXCLUDED from worktree scan: {excluded['files']} file(s) by secret_scan.exclude "
+              f"{', '.join(excluded['patterns'])} (commit-check still scans them staged)")
     print(f"{'Staged' if staged else 'Worktree'} heuristic: {report['text_files']} text files, {report['bytes']} bytes, "
           f"{len(report['findings'])} suspects. Artifacts/history are NOT checked.")
     return 1 if report["findings"] else 0
+
+
+def worktree_secrets(root: Path) -> dict:
+    config, _, _ = load_config(root)
+    return scan_worktree(snapshot(root), secret_excludes(config))
 
 
 LOG = ".devframework/last_run.log"
@@ -53,7 +62,7 @@ def run_step(root: Path, label: str, command: list, timeout: int, verbose: bool)
     argv = [sys.executable if arg == "{python}" else arg for arg in command]
     print(f"RUN {label}", flush=True)
     run = subprocess.run(argv, cwd=root, timeout=timeout, shell=False, capture_output=True,
-                         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+                         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONIOENCODING": "utf-8"})
     output = (run.stdout + run.stderr).decode("utf-8", errors="replace")
     with open(root / LOG, "a", encoding="utf-8") as log:
         log.write(f"== {label}: {' '.join(argv)}\n{output}\n")
@@ -70,7 +79,7 @@ def finish(root: Path, *, commit: bool = False, verbose: bool = False) -> int:
     result = show_doctor(report, False)
     if result:
         return result
-    if show_secrets(root, scan_worktree(snapshot(root))) or (commit and show_secrets(root)):
+    if show_secrets(root, worktree_secrets(root)) or (commit and show_secrets(root)):
         return 1
     config, _, _ = load_config(root, report.get("kind", "product"))
     if commit and config.get("testing") == "advanced":
@@ -170,7 +179,7 @@ def main() -> int:
         if args.command == "doctor":
             return show_doctor(doctor(root), args.structural)
         if args.command == "secrets":
-            return show_secrets(root, None if args.staged else scan_worktree(snapshot(root)))
+            return show_secrets(root, None if args.staged else worktree_secrets(root))
         if args.command == "devlog":
             return devlog_entry(root, args)
         return finish(root, commit=args.command == "commit-check", verbose=args.verbose)

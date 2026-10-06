@@ -1,6 +1,7 @@
 """Bounded Git source snapshot for the secret heuristic; no staging, checkout or index writes."""
 from __future__ import annotations
 
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 from safety import checked_path, child
@@ -32,10 +33,14 @@ def snapshot(root: Path) -> dict[str, bytes | None]:
     return files
 
 
-def scan_worktree(files: dict[str, bytes | None]) -> dict:
+def scan_worktree(files: dict[str, bytes | None], exclude: list[str] = ()) -> dict:
+    """`exclude` globs (fnmatch: `*` crosses `/`) are skipped and counted, never silently."""
     report = empty_report()
+    report["excluded"] = {"patterns": list(exclude), "files": 0}
     for name, data in files.items():
-        if data is not None:
+        if any(fnmatchcase(name, pattern) for pattern in exclude):
+            report["excluded"]["files"] += 1
+        elif data is not None:
             inspect_blob(report, name, data)
     if not report["text_files"]:
         raise ValueError("No text source inspected")

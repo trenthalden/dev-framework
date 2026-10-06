@@ -12,6 +12,22 @@ import navigate
 from verification import doctor, under_construction
 
 PASSING = "import unittest\nclass T(unittest.TestCase):\n    def test_ok(self):\n        self.assertTrue(True)\n"
+# Stand-ins seen in quoted third-party READMEs (KE-2026-10-02-SECRET-STANDINS); this file is scanned too.
+STAND_INS = """\
+EXA_API_KEY=your-exa-key
+FIRECRAWL_API_KEY=fc-your-api-key
+XAI_API_KEY=sk-xai-...
+export OPENAI_API_KEY=sk-...
+BROWSERBASE_API_KEY=***
+FIRECRAWL_API_KEY=fc-***
+MODEL_API_KEY="your-api-key"
+"apiKey": "your-api-key",
+max_tokens: 4096
+secret_key: "abcdefghijklmn"
+API_KEY=<your key>
+token: xxxxxxxx
+FreeToken: Efficient Edge Serving
+"""
 FAILING = "import unittest\nclass T(unittest.TestCase):\n    def test_bad(self):\n        self.fail('planted')\n"
 
 
@@ -123,6 +139,37 @@ class GateTests(WorkspaceTest):
         run = self.run_check("commit-check")
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
         self.assertIn("COMMIT CHECK PASSED", run.stdout)
+
+    def test_documentation_stand_ins_pass_and_an_excluded_path_is_named(self):
+        self.git_init()
+        self.init()
+        self.configure()
+        self.write("docs/setup.md", STAND_INS)
+        run = self.run_check("secrets", "--worktree")
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn(" 0 suspects", run.stdout)
+
+        self.write("clips/2026/readme.md", "OPENAI_API_KEY=sk-" + "proj-Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4zAb7c\n")
+        run = self.run_check("secrets", "--worktree")
+        self.assertEqual(run.returncode, 1)
+        self.assertIn("clips/2026/readme.md:1", run.stdout, "a real-shaped key is still caught")
+
+        path = self.target / ".devframework/project.json"
+        config = json.loads(path.read_text(encoding="utf-8"))
+        config["secret_scan"] = {"exclude": ["clips/**"]}
+        path.write_text(json.dumps(config), encoding="utf-8")
+        run = self.run_check("finish")
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn("SECRET SCAN EXCLUDES (worktree only", run.stdout, "doctor names the exclusion every run")
+        self.assertIn("EXCLUDED from worktree scan: 1 file(s) by secret_scan.exclude clips/**", run.stdout)
+        self.git("add", "-A")
+        run = self.run_check("commit-check")
+        self.assertEqual(run.returncode, 1, "the staged scan before a commit ignores the exclusion")
+        self.assertIn("clips/2026/readme.md:1", run.stdout)
+
+        config["secret_scan"] = {"exclude": ["**"]}
+        path.write_text(json.dumps(config), encoding="utf-8")
+        self.assertIn("secret_scan.exclude must be", self.run_check("doctor").stdout, "the scan cannot be switched off")
 
     def test_a_tool_is_proven_by_examples_and_an_exploration_says_nothing_is_proven(self):
         self.git_init()

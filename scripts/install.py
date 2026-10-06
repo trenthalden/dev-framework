@@ -258,6 +258,9 @@ def install(target: Path, *, source: Path = PACKAGE, name: str | None = None,
 
 
 def main() -> int:
+    # Help and the JSON report carry non-ASCII (→); a cp1251/cp866 console must not crash on it.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", type=Path, required=True)
     parser.add_argument("--name")

@@ -12,14 +12,19 @@ ASSIGNMENT = re.compile(
 PLACEHOLDER = re.compile(r"(?:<[^<>]+>|\$\{[A-Z0-9_]+\}|YOUR_[A-Z0-9_]+|REPLACE_ME|EXAMPLE_ONLY|CHANGEME)")
 KEY = re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----")
 TOKEN = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|sk-(?:proj-)?[A-Za-z0-9_-]{32,})\b")
+# Documentation stand-ins: your-key, fc-your-key, <your key>, abcdef..., sk-..., fc-***, xxxx.
+# A real key holds none of these.
+STAND_IN = re.compile(r"(?:^|[-_])your[-_]|^<|^abcdef|\.\.\.|…|xxx|\*\*\*|^\*+$", re.IGNORECASE)
 MAX_BLOB = 10 * 1024 * 1024
 MAX_TOTAL = 100 * 1024 * 1024
 
 
 def benign(name: str, value: str, quoted: bool) -> bool:
-    if not value or PLACEHOLDER.fullmatch(value):
+    if not value or PLACEHOLDER.fullmatch(value) or STAND_IN.search(value):
         return True
     key = re.sub(r"[^a-z0-9]", "", name.lower())
+    if key.endswith("tokens") and value.isdigit():
+        return True  # max_tokens: 4096 is a count, not a credential
     # Exact metadata names + constrained values; not a blanket token_* exemption.
     if key == "tokentype" and value in ("Bearer", "bearer", "MAC", "mac"):
         return True
@@ -44,6 +49,8 @@ def findings(text: str) -> list[tuple[int, str]]:
             prefix = text[text.rfind("\n", 0, match.start()) + 1:match.start()].strip()
             if prefix not in ("", "export", "-"):
                 continue  # bare dotenv/YAML scalars, not prose or arbitrary code expressions
+            if re.match(r"[ \t]+[^\s#]", text[match.end():]):
+                continue  # more words follow: a title such as "FreeToken: Efficient Edge Serving", not a value
         value = next(v for v in match.groups()[1:] if v is not None)
         if not benign(match[1], value, match[4] is None):
             found.append((text.count("\n", 0, match.start()) + 1, "credential-like literal"))

@@ -85,3 +85,23 @@
 - Status: fixed in 1.6.1.
 - Verification: `tests/test_gates.py`, `test_a_local_devlog_is_not_product_documentation`.
   A broken link in a normal doc is still an error. The configured Devlog directory is not.
+
+## KE-2026-10-02-CONSOLE-ENCODING — install.py --help crashed on a cp1251 console
+
+- Found: 2 October 2026, installing into KnowledgeBase through the Claude Code plugin (Windows, Russian locale,
+  output captured by a pipe). `print_help` raised `UnicodeEncodeError` on `→` in the `--kind` help.
+- Cause: `install.py` kept the locale encoding with `errors=strict`; `check.py`, `navigate.py` and `hostcheck.py`
+  already switched stdout to UTF-8.
+- Status: fixed (Unreleased). `install.py` reconfigures stdout/stderr to UTF-8 with replacement.
+- Verification: `tests/test_install.py`, `test_help_does_not_crash_on_a_non_utf8_console` runs `--help` of
+  install, check, navigate and hostcheck under `PYTHONIOENCODING=cp1251`; it fails with the fix removed.
+
+## KE-2026-10-02-SECRET-STANDINS — finish blocked by placeholder keys in quoted READMEs
+
+- Found: 2 October 2026 in KnowledgeBase: 23 SECRET SUSPECT in 11 `clips/**` notes, all documentation
+  stand-ins (`your-exa-key`, `sk-...`, `***`, `"your-api-key"`, `max_tokens: 4096`). The notes keep third-party
+  READMEs verbatim, so they cannot be edited, and `finish` never reached the tests.
+- Status: fixed (Unreleased). Stand-ins are recognised; `secret_scan.exclude` removes paths from the worktree
+  scan only, named on every run; the staged scan before a commit still covers them.
+- Verification: `tests/test_gates.py`, `test_documentation_stand_ins_pass_and_an_excluded_path_is_named`
+  (stand-ins → 0 suspects, real-shaped key caught, exclusion named, commit-check still fails, `**` refused).
