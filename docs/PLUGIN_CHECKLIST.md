@@ -116,7 +116,7 @@ Plan with researched host facts: [HOSTS_PLAN_2026-09-23.md](HOSTS_PLAN_2026-09-2
       `register(ctx)`, tool schema shape, `register_skill` namespacing, plugins discovered at **process** start —
       Desktop needs a restart, `hermes plugins install file://…`), skills-guard blocking any skill that mentions
       the context files, verify-on-stop and how `scripts/run_tests.sh` + `record_terminal_result` satisfy it,
-      context-file precedence (`.hermes.md` > AGENTS.md, cwd-only, promptware scan), SOUL rule stacking and
+      context-file precedence (`.hermes.md` takes priority over `AGENTS.md`; cwd-only, promptware scan), SOUL rule stacking and
       the reply-shape conflict, `state.db` schema for measurement, git-bash vs Windows paths, Desktop has no
       agent-plugin UI (install from chat), `hermes profile create --clone-from`, quotas shared across profiles
 - [ ] Verify each statement against the current Hermes checkout (version-stamped); mark anything unverified
