@@ -6,6 +6,17 @@ for `9efa0d7` was green. The v0.2 notes below are the 31 August record. They are
 
 ## In progress
 
+- Proportional engineering/testing rules — v1.6.2, owner-authorized Nov5, local only.
+  Canonical AGENTS, agent guidelines, checklist and healthcheck wording now require
+  a short periodic architecture/testing simplicity checkpoint and early authorized
+  real-agent functional acceptance. Removed heavy-overlay delay justification,
+  clarified synthetic regression vs real-agent evidence and full-gate boundaries.
+  Synced process copies in the package and active consumer without reinstalling or
+  overwriting project WIP. Existing installer propagation/conflict scenario PASS
+  (1 test,0.116s); doctor READY and task diff whitespace check clean. Owner then
+  authorized the1.6.2 version bump, local commit and active-profile plugin update.
+  No runtime code changes, push, remote tag or publication authorized.
+
 - Cursor adapter — authorized 2026-10-02, local only (no commit/push/publish). Plan, decisions and
   live result: [HOSTS_PLAN_2026-09-23.md](HOSTS_PLAN_2026-09-23.md) §4.
 

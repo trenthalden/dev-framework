@@ -90,12 +90,19 @@ trigger. Never trade away data integrity, security, accessibility or execution c
 
 ## 3. Planning and documentation
 
-This package is a heavy overlay of documentation, analysis and tests. It is meant to
-raise the quality of development, of reading a change, and of understanding existing
-code. Work is slower and the outcome is more predictable. Plan for that: prefer
-**larger iterations** that rest on the catalogue, architecture and known errors, close
-with isolated tests, and are independently acceptable. Do not slice a well-understood
-path into many engineering chores; the overlay already pays for a bigger step.
+Prefer the smallest complete functional iteration: documentation, architecture and
+tests serve an observable user outcome, not a larger engineering process. Reuse the
+catalogue and known errors; do not split a value path into file-level chores.
+
+**Periodic simplicity checkpoint.** At each outcome boundary, after two unsuccessful
+correction/review rounds, or about 30 minutes of engineering without a useful functional
+result, spend at most five minutes critically checking architecture AND testing scope.
+Ask what user outcome is blocked, which layers/options protect a current requirement,
+which checks duplicate the harness, and what simpler existing path can work. In the
+existing checklist record only keep/cut/defer, the next functional run and remaining
+safety constraints; remove superseded blockers. Trigger this immediately if verification
+or coordination outweighs implementation. No extra reviewer, document, service, timer
+or gate. Never simplify away privacy, authority, data integrity or a required Stop.
 
 Independent work that can run at the same time **must** run in parallel subagents when
 the host provides them. Do not serialize reads, searches, reviews or implementations
@@ -170,8 +177,10 @@ without sending source code, credentials or private incident data automatically.
 - **Lean testing** — recommended for explorations, tools and software with a small number of users. One
   scenario test per user-visible promise, run through the real entry point (CLI, API, UI adapter) on
   isolated fixtures. No tests of internals and no matrix of edge cases until a defect shows one is needed
-  (then its regression test). Before trusting a new test, break the behaviour once in a scratch copy and
-  see the test fail. The whole suite runs in under a minute.
+  (then its regression test). Before trusting a new automated regression detector, see its
+  intended assertion fail on the relevant old/broken behaviour in a scratch copy. This is
+  not a requirement to plant faults before every functional observation or agent run.
+  Keep the deterministic suite short; live agent latency is reported separately.
 - **Advanced testing** — recommended from tens of thousands of users, for complex projects with a
   production environment and a high cost of error. Unit tests for logic with branches, integration tests
   for storage, network and process boundaries, end-to-end tests for every critical user path; negative
@@ -179,18 +188,28 @@ without sending source code, credentials or private incident data automatically.
   processes where relevant; every use case `covered` or `NFV` (commit-check refuses a `gap`); a current
   regression plan (`docs/REGRESSION_TEST.md`); verification in an isolated staging environment before production.
 
-Both: use the project's test framework; never a real profile, production database, actual token or live
-integration as a fixture. Moving to advanced is the operator's call when users, production or the cost of
-an error grow; say so when you see it.
+Both: use the project's test framework. Dangerous deterministic negative tests use isolated
+fictitious data, never production profiles/databases/credentials or live integrations as
+fault-injection fixtures. This does not prohibit a functional real-agent run explicitly
+within the owner's authorized environment, tools, destinations and spending limits.
+Moving to advanced testing remains the operator's decision, not an automatic response
+to a growing test list.
 
-For a regression, demonstrate the relevant test fails on a synthetic defect/old behaviour
-and passes on the correction. Do this in fixtures or an isolated checkout, not a live app.
+For agent projects, primary acceptance is the REAL agent performing the functional task
+through its actual executor: inspect its tool effects and results independently. Stubs
+prove plumbing only. Run a small capped disposable selfcheck early after establishing
+its necessary permissions, containment and Stop; do not require exhaustive failure/race
+matrices or a polished test harness first. Synthetic RED applies to deterministic
+regression detectors, not every agent field-validation run. Do not inject faults into
+live data; an authorized functional run never grants deployment or broader authority.
 A pure-function test is not evidence for concurrent I/O or crash durability.
 
-After implementation run `python .devframework/check.py finish`. Configure its build,
-test and extra-check commands for this stack; the test command reports its counts. Build all consumers of
-shared code. Missing checks mean NOT READY, not success. Report failures and blocked work
-honestly; do not claim completion or expand authority to make a check pass.
+For the completed change run `python .devframework/check.py finish` once; repeat only
+when later changes invalidate that evidence. During corrections and progress reports,
+run affected checks, not the full gate by default. Configure the stack's build/test/extra
+checks and counted test result; build affected consumers of shared code. Missing required
+checks mean NOT READY for completion/release, not a ban on safe authorized disposable
+functional experiments. Report failures honestly; never weaken a gate to claim success.
 <!-- kind: tool -->
 For a tool the test command is `run_smoke.py`: it runs the tool on the `smoke` examples in project.json and
 compares the output. The tool is its own test; the examples are its evidence, so keep at least one.
@@ -248,16 +267,14 @@ For N clients polling every T seconds for H hours/day:
 Check these assumptions against measured traffic. A comment marker alone proves no maths.
 Prefer push, caching, bounded backoff and jitter where appropriate, not by dogma.
 
-**Cost of the loop itself.** Time the operations you repeat, and report those numbers with the
-result. Re-running a full verification for a change whose scope you already know is waste, not
-rigour: during iteration run the affected test module (seconds), and run the full gate once before
-reporting. A gate slower than a minute is a defect in the suite, not a fact of life. Measure per
-module before trimming anything: independent modules belong in parallel processes
-(`run_unittest.py --jobs auto`), and only what is still slow deserves a smaller fixture or fewer
-duplicated paths. Judge the suite by risk covered per second spent — a test that repeats another
-test's path, an extra check that re-runs the same suite, and a fixture that installs more than the
-case needs are removable without losing evidence. If a session spends more time verifying than
-changing, say so and fix the loop before continuing.
+**Cost of the loop itself.** Time repeated operations and report their measured cost.
+Use affected checks while changing; one full gate closes the completed iteration, not
+every progress report. Keep deterministic checks short, reuse unchanged evidence and
+remove duplicate coverage. If verification/coordination outweighs implementation, use
+the five-minute simplicity checkpoint in section 3, trim the current loop and return to
+the functional path. Do not turn suite optimization into another prerequisite project.
+Slow real-agent generation is measured separately; do not replace it with a stub merely
+to fit a wall-clock target. Required completion/release checks remain in force.
 
 ## 6. Secrets and checks
 

@@ -5,6 +5,18 @@ changed defaults. Read this file before updating. Tags use `dev-framework--vX.Y.
 
 ## Unreleased
 
+## 1.6.2 — 2026-11-05
+
+- Make architecture/testing simplicity review periodic, short and part of the existing
+  checklist: at outcome boundaries, after two failed correction/review rounds, or
+  about 30 minutes without useful functional progress. No additional reviewer or gate.
+- Prefer early authorized real-agent functional selfchecks over synthetic test matrices;
+  distinguish dangerous fault-injection fixtures from permitted agent field work.
+- Scope planted RED evidence to deterministic regression detectors and run the full
+  gate at the completed-change boundary, not before every progress report.
+- Update the shared checklist and architecture healthcheck wording; retain privacy,
+  authority, data-integrity, Stop and release controls.
+
 Fixes from installing into a content repository (KnowledgeBase, 2026-10-02):
 
 - `install.py --help` crashed with `UnicodeEncodeError` on a cp1251 console (the `→` in `--kind` help).

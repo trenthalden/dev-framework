@@ -32,9 +32,15 @@ already made, quoted, so they are not silently re-litigated later.
 
 ## Portions
 
-One portion = one iteration the operator can accept or send back. Make it as large as
-the documentation, code analysis and closing tests can honestly carry — not a week-long
-stage, and not a handful of file-level chores.
+One portion = the smallest complete functional result the operator can accept or send
+back, not a collection of engineering chores. Acceptance for agent work names the real
+agent task and observed tool effects, not just a synthetic suite count.
+
+At outcome boundaries, after two unsuccessful correction/review rounds, or about 30
+minutes of engineering without useful functional progress, take the maximum-five-minute
+simplicity checkpoint (AGENTS.md section 3). In this existing document record only
+keep/cut/defer, the next functional run and preserved safety constraints. Do not add a
+separate audit/checklist/reviewer/gate; remove superseded prerequisites before proceeding.
 
 ### 1. <portion name>
 

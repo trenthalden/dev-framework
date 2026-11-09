@@ -14,7 +14,7 @@ agents, and the established engineering canon. Areas: SCOPE DB TX API UI BULK JO
 | SCOPE-4 | One source of truth per fact; everything else derives from it or links to it. | two copies drift apart |
 | SCOPE-5 | Smallest diff that works; refactor commits separate from behaviour commits. | unreviewable, unrevertable change |
 | SCOPE-6 | Three failed fix or review rounds: stop and re-scope instead of a fourth round. | endless loops |
-| SCOPE-7 | For every fix, name the neighbouring defect it can create (lock → slow work under lock → stale queue) and check it. | the fix breeds the next bug |
+| SCOPE-7 | For a fix, check the credible neighbouring risk it introduces; do not expand this into an exhaustive hypothetical failure matrix. | the fix breeds the next bug |
 | SCOPE-8 | Cost repeated work before shipping it: calls/day × payload × turns at the target scale. | silent cost and load |
 | DB-1 | Parameterized queries only; never build SQL (or shell, HTML) from strings. | injection |
 | DB-2 | Writes that must agree happen in one transaction, or have an explicit compensating step. | half-written state |
@@ -67,9 +67,9 @@ agents, and the established engineering canon. Areas: SCOPE DB TX API UI BULK JO
 | DEP-4 | Publish checksums and versions only after the final build; ship nothing while a mandatory review is pending. | shipped unreviewed or mismatched |
 | VER-1 | Every change has a runnable pass/fail check; its result, not the author's claim, is the evidence. | false "done" |
 | VER-2 | Test through the real entry path (UI adapter, CLI, API, scheduler), not only the inner guard. | unit-green, wiring-red |
-| VER-3 | A new check is seen failing once on a planted defect before it is trusted. | detectors that never fire |
+| VER-3 | A new automated regression detector reaches its intended assertion on old/broken behaviour before trust; ordinary functional observations and real-agent runs do not require planted faults. | detectors that never fire |
 | VER-4 | Tests are not edited to make code pass; a test change is reviewed on its own. | tampered tests |
-| VER-5 | Reproduce a bug as a failing test before fixing it. | fixes that fix nothing |
+| VER-5 | Reproduce the observed failure through its actual entrypoint before fixing it; real-agent functional failures need not first become a synthetic matrix. | fixes that fix nothing |
 | VER-6 | Errors surface where they happen, with context; none are swallowed. | late or silent failure |
 | VER-7 | Documentation claims are checked against the code in the same change. | docs that lie |
 | SEC-1 | Validate every path component against the root (`..`, symlinks, junctions), not only the root. | path escape |

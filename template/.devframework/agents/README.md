@@ -82,10 +82,14 @@ valid answer and must be said plainly.
 
 The project's `testing` setting applies (AGENTS.md §4).
 - **lean:**
-  - one smoke per promise of the agent — a reply path or a scheduled output — through the real entry point;
-  - the model may be replaced by a stub for the plumbing;
-  - before switching a job on: one live run with a spending cap;
-  - the first outputs go to the owner for review.
+  - run the smallest capped disposable REAL-agent selfcheck early through its actual executor,
+    after establishing the permissions and containment needed for that particular run;
+  - let the agent exercise its authorized environment/tools; independently verify effects;
+    a stub can prove plumbing but cannot establish agent behaviour or tool competence;
+  - do not require exhaustive boundary/failure matrices or test-harness perfection before
+    a safe functional experiment; keep dangerous negative tests isolated and fictitious;
+  - before switching a job on: a live run with a spending cap, then owner review of first outputs;
+    a functional run is not deployment or expanded data/tool authority.
 - **advanced:**
   - everything in lean;
   - an [evaluation set](AGENT_EVAL.md) run before every prompt or model change;
@@ -96,7 +100,10 @@ The project's `testing` setting applies (AGENTS.md §4).
 
 - Try the idea on the real host first: permissions, operating system, scheduler, sandbox. A ten-round
   design once failed at the end on a Windows permission a one-hour spike would have shown.
-- Limit review loops: three rounds without a green gate means the scope is wrong, not the review.
+- Use AGENTS.md section 3's five-minute simplicity checkpoint at iteration boundaries,
+  after two unsuccessful correction/review rounds or about 30 minutes without a useful
+  functional result. Record keep/cut/defer in the existing checklist, cut unnecessary
+  architecture/tests and return to real agent work; do not count green-gate rounds as progress.
 - Use what the agent host already offers (skill directories, schedulers, git) before building delivery,
   sync or migration machinery. The most expensive month in the source project was spent on infrastructure
   later replaced by `git` and one config line.

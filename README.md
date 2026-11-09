@@ -3,7 +3,7 @@
 ![DEV Framework](assets/banner.svg)
 
 [![CI](https://github.com/trenthalden/dev-framework/actions/workflows/verify.yml/badge.svg)](https://github.com/trenthalden/dev-framework/actions/workflows/verify.yml)
-![version 1.6.1 beta](https://img.shields.io/badge/version-1.6.1%20beta-6E56CF)
+![version 1.6.2 beta](https://img.shields.io/badge/version-1.6.2%20beta-6E56CF)
 ![license MIT](https://img.shields.io/badge/license-MIT-6E56CF)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-6E56CF)
 
