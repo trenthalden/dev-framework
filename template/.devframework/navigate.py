@@ -22,6 +22,8 @@ TEMPLATE_DOCS = {"docs/CHECKLIST_TEMPLATE.md", "docs/USE_CASE_TEMPLATE.md", "doc
 HEADING = re.compile(r"^(#{2,4}) ((?:UC|KE|FR|NFR|SET|INV)-[A-Za-z0-9.-]+)(?:\s+[—-]\s+(.*))?\s*$")
 PLACEHOLDER = re.compile(r"YYYY|###|\.\.\.|<[A-Za-z ]+>")
 CHECKBOX = re.compile(r"^(\s*- \[)( |x|X)(\] .*)$")
+# Checklist / handoff slugs: no path separators, no traversal. Reject empty, "..", and leading-dot forms.
+SLUG = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
 def write(path: Path, text: str) -> None:
@@ -31,6 +33,49 @@ def write(path: Path, text: str) -> None:
 def read(root: Path, relative: str) -> str:
     path = root / relative
     return path.read_text(encoding="utf-8") if path.is_file() else ""
+
+
+def _is_under(path: Path, parent: Path) -> bool:
+    """True when *path* is *parent* or a descendant (after resolve)."""
+    path, parent = path.resolve(), parent.resolve()
+    return path == parent or parent in path.parents
+
+
+def docs_dir(root: Path) -> Path:
+    """Resolved ``root/docs``, refusing a docs tree that escapes the project root."""
+    root_r = root.resolve()
+    docs = (root / "docs").resolve()
+    if not _is_under(docs, root_r):
+        raise ValueError("docs/ escapes project root (symlink?)")
+    return docs
+
+
+def resolve_docs_slug(root: Path, slug: str) -> Path:
+    """Resolve ``docs/<slug>.md`` under ``root/docs``; refuse traversal / absolute / nested paths.
+
+    Accepts only ``[A-Za-z0-9._-]+``, rejects empty, ``..``, and leading-dot-only / leading-dot
+    slugs. The resolved path must stay under ``root/docs`` before any read, write, or unlink.
+    """
+    text = str(slug or "").strip()
+    if not text or not SLUG.fullmatch(text) or ".." in text or text.startswith("."):
+        raise ValueError(
+            f"invalid checklist slug {slug!r}: use only letters, digits, . _ - "
+            "(no path separators, no '..', no leading dot)"
+        )
+    docs = docs_dir(root)
+    path = (docs / f"{text}.md").resolve()
+    if not _is_under(path, docs):
+        raise ValueError(f"checklist path escapes docs/: {slug!r}")
+    return path
+
+
+def resolve_under_docs(root: Path, *parts: str) -> Path:
+    """Join *parts* under ``root/docs`` and refuse any resolved escape."""
+    docs = docs_dir(root)
+    path = docs.joinpath(*parts).resolve()
+    if not _is_under(path, docs):
+        raise ValueError(f"path escapes docs/: {parts!r}")
+    return path
 
 
 def blocks(root: Path):
@@ -286,7 +331,6 @@ only; no commit/push without authorization; finish is evidence for the worktree,
 
 
 def checklist(root: Path, action: str, slug: str = "", text: str = "") -> str:
-    docs = root / "docs"
     if action == "show":
         active = active_checklists(root)
         if not active:
@@ -294,7 +338,7 @@ def checklist(root: Path, action: str, slug: str = "", text: str = "") -> str:
         return "\n".join(f"docs/{p.name}: " + (", ".join(f"[{n}] {t}" for n, t in open_items(p)) or "all done") for p in active)
     if not slug:
         raise ValueError("checklist <new|add|tick|archive> needs a slug (file docs/<slug>.md)")
-    path = docs / f"{slug}.md"
+    path = resolve_docs_slug(root, slug)
     if action == "new":
         if path.exists():
             raise ValueError(f"{path.name} already exists")
@@ -303,6 +347,7 @@ def checklist(root: Path, action: str, slug: str = "", text: str = "") -> str:
                                 f"{slug} — {text or 'TODO: one line saying what this programme achieves'}")
         body = body.replace("**Started:** YYYY-MM-DD", f"**Started:** {date.today().isoformat()}")
         body = "\n".join(l for l in body.splitlines() if l.strip() != "- [ ] ...")
+        docs_dir(root).mkdir(parents=True, exist_ok=True)
         write(path, body.lstrip() + "\n")
         return f"created docs/{path.name}; add items with: checklist add {slug} \"<item>\""
     if not path.is_file():
@@ -328,17 +373,18 @@ def checklist(root: Path, action: str, slug: str = "", text: str = "") -> str:
     if action == "archive":
         if open_items(path):
             raise ValueError("open items remain; archive only a finished checklist")
-        archive = docs / "archive"
-        archive.mkdir(exist_ok=True)
+        archive_dir = resolve_under_docs(root, "archive")
+        archive_dir.mkdir(exist_ok=True)
+        dest = resolve_under_docs(root, "archive", path.name)
         content = "\n".join(lines).replace("**Status:** in progress", f"**Status:** done {date.today().isoformat()}", 1)
-        write(archive / path.name, content + "\n")
+        write(dest, content + "\n")
         path.unlink()
         return f"archived to docs/archive/{path.name}"
     raise ValueError(f"unknown checklist action {action!r}")
 
 
 def handoff(root: Path, slug: str, note: str) -> str:
-    path = root / "docs" / f"{slug}.md"
+    path = resolve_docs_slug(root, slug)
     if not path.is_file():
         raise ValueError(f"no checklist docs/{slug}.md")
     items = open_items(path)

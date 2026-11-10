@@ -5,6 +5,13 @@ changed defaults. Read this file before updating. Tags use `dev-framework--vX.Y.
 
 ## Unreleased
 
+## 1.6.3 — 2026-11-10
+
+- Security: `navigate.py` confines checklist and handoff slugs. Only `[A-Za-z0-9._-]+`, no `..`,
+  no leading dot; the resolved path must stay under `docs/` (itself under the project root)
+  before any read, write or unlink, including `archive`. Before this, a `../` slug could create,
+  append to or delete a `.md` file outside the project. Reported in the Hermes plugin catalog review.
+
 ## 1.6.2 — 2026-11-05
 
 - Make architecture/testing simplicity review periodic, short and part of the existing
